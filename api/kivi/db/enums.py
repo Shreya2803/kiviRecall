@@ -43,6 +43,7 @@ class ExtractionOutcome(str, enum.Enum):
 
 class SufficiencyVerdict(str, enum.Enum):
     SUFFICIENT = "sufficient"
+    PARTIAL = "partial"
     INSUFFICIENT = "insufficient"
 
 
