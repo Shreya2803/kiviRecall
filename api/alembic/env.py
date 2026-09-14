@@ -8,6 +8,7 @@ from alembic import context
 
 from kivi.config import settings
 from kivi.db.base import Base
+from kivi.db import models  # noqa: F401  (registers tables on Base.metadata)
 
 config = context.config
 if config.config_file_name is not None:
