@@ -24,6 +24,7 @@ services:
     volumes:
       - ./api:/app
       - hf_cache:/root/.cache/huggingface
+      - ./data:/data:ro
     depends_on:
       db:
         condition: service_healthy

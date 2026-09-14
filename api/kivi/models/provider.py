@@ -39,11 +39,16 @@ class ModelProvider(ABC):
     def model_for(self, tier: Tier) -> str: ...
 
     @abstractmethod
-    async def _request(self, messages: list[dict], *, model: str, tier: Tier) -> tuple[str, int, int]:
+    async def _request(
+        self, messages: list[dict], *, model: str, tier: Tier, json_mode: bool
+    ) -> tuple[str, int, int]:
         """One HTTP call. Returns (content, tokens_in, tokens_out).
 
         Raises httpx.HTTPStatusError / httpx.TransportError on failure — the
-        caller (_call_with_retry) decides what's retryable.
+        caller (_call_with_retry) decides what's retryable. json_mode=True must
+        make the provider actually enforce JSON output — prompt wording alone is
+        not reliable: this model happily emits a plain-text key:value listing
+        instead of JSON when only asked for it in the prompt.
         """
 
     async def complete(
@@ -62,7 +67,7 @@ class ModelProvider(ABC):
         for schema_attempt in range(_SCHEMA_RETRIES + 1):
             start = time.monotonic()
             content, tokens_in, tokens_out = await self._call_with_retry(
-                working_messages, model=model, tier=tier
+                working_messages, model=model, tier=tier, json_mode=schema is not None
             )
             total_latency_ms += int((time.monotonic() - start) * 1000)
             total_tokens_in += tokens_in
@@ -101,12 +106,12 @@ class ModelProvider(ABC):
         raise ProviderError(f"{self.name}: exhausted schema validation retries")  # unreachable
 
     async def _call_with_retry(
-        self, messages: list[dict], *, model: str, tier: Tier
+        self, messages: list[dict], *, model: str, tier: Tier, json_mode: bool
     ) -> tuple[str, int, int]:
         delay = 1.0
         for attempt in range(_MAX_RETRIES + 1):
             try:
-                return await self._request(messages, model=model, tier=tier)
+                return await self._request(messages, model=model, tier=tier, json_mode=json_mode)
             except httpx.HTTPStatusError as exc:
                 status = exc.response.status_code
                 retryable = status == 429 or 500 <= status < 600
@@ -163,12 +168,16 @@ class SarvamProvider(ModelProvider):
     def model_for(self, tier: Tier) -> str:
         return settings.extraction_model if tier == "extraction" else settings.answer_model
 
-    async def _request(self, messages: list[dict], *, model: str, tier: Tier) -> tuple[str, int, int]:
+    async def _request(
+        self, messages: list[dict], *, model: str, tier: Tier, json_mode: bool
+    ) -> tuple[str, int, int]:
         payload: dict = {"model": model, "messages": messages, "max_tokens": _MAX_TOKENS}
         if tier == "extraction":
             # CRITICAL: without this, thinking-mode reasoning tokens consume
             # max_tokens and content comes back empty with finish_reason "length".
             payload["reasoning_effort"] = None
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
 
         response = await self._client.post(
             f"{self._base_url}/v1/chat/completions",
@@ -206,11 +215,17 @@ class GeminiProvider(ModelProvider):
     def model_for(self, tier: Tier) -> str:
         return settings.gemini_extraction_model if tier == "extraction" else settings.gemini_answer_model
 
-    async def _request(self, messages: list[dict], *, model: str, tier: Tier) -> tuple[str, int, int]:
+    async def _request(
+        self, messages: list[dict], *, model: str, tier: Tier, json_mode: bool
+    ) -> tuple[str, int, int]:
+        payload: dict = {"model": model, "messages": messages, "max_tokens": _MAX_TOKENS}
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
+
         response = await self._client.post(
             f"{self._base_url}/chat/completions",
             headers={"Authorization": f"Bearer {self._api_key}", "Content-Type": "application/json"},
-            json={"model": model, "messages": messages, "max_tokens": _MAX_TOKENS},
+            json=payload,
         )
         response.raise_for_status()
         data = response.json()

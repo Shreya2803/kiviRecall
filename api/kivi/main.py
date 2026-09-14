@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine
 
-from kivi.config import settings
+from kivi.db.session import engine
 
 app = FastAPI(title="Kivi Semantic Memory API")
 
@@ -14,15 +13,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_engine = create_async_engine(settings.database_url, pool_pre_ping=True)
-
 REQUIRED_EXTENSIONS = ("vector", "pg_trgm", "unaccent")
 
 
 @app.get("/health")
 async def health() -> dict:
     try:
-        async with _engine.connect() as conn:
+        async with engine.connect() as conn:
             result = await conn.execute(
                 text("SELECT extname FROM pg_extension WHERE extname = ANY(:names)"),
                 {"names": list(REQUIRED_EXTENSIONS)},

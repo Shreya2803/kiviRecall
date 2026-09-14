@@ -4,9 +4,11 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     ARRAY,
     BigInteger,
+    Boolean,
     CheckConstraint,
     Computed,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -30,6 +32,13 @@ from kivi.db.enums import (
     SufficiencyVerdict,
     UserActionType,
 )
+
+
+def _pg_enum(enum_cls, name: str) -> SAEnum:
+    # sa.Enum defaults to writing a Python Enum member's NAME ("PROJECT"), but
+    # the Postgres type (0002_core_schema.py) was created with the lowercase
+    # VALUES ("project"). values_callable makes SQLAlchemy write .value instead.
+    return SAEnum(enum_cls, name=name, values_callable=lambda obj: [e.value for e in obj])
 
 
 class Dictation(Base):
@@ -63,8 +72,11 @@ class Entity(Base):
     __tablename__ = "entity"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    entity_type: Mapped[EntityType] = mapped_column(SAEnum(EntityType, name="entity_type"), nullable=False)
+    entity_type: Mapped[EntityType] = mapped_column(_pg_enum(EntityType, "entity_type"), nullable=False)
     canonical_name: Mapped[str] = mapped_column(Text, nullable=False)
+    # New entities start low and flagged (CLAUDE.md section 7: bias toward under-merging).
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, server_default="1.0")
+    needs_review: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -83,7 +95,10 @@ class EntityAlias(Base):
     alias: Mapped[str] = mapped_column(Text, nullable=False)
     normalized: Mapped[str] = mapped_column(Text, nullable=False)
     match_method: Mapped[AliasMatchMethod] = mapped_column(
-        SAEnum(AliasMatchMethod, name="alias_match_method"), nullable=False
+        _pg_enum(AliasMatchMethod, "alias_match_method"), nullable=False
+    )
+    phonetic_key: Mapped[str | None] = mapped_column(
+        Text, Computed("dmetaphone(normalized)", persisted=True), nullable=True
     )
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -102,7 +117,7 @@ class ExtractionRun(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     dictation_id: Mapped[str] = mapped_column(String, ForeignKey("dictation.id"), nullable=False)
     outcome: Mapped[ExtractionOutcome] = mapped_column(
-        SAEnum(ExtractionOutcome, name="extraction_outcome"), nullable=False
+        _pg_enum(ExtractionOutcome, "extraction_outcome"), nullable=False
     )
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     memories_created_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
@@ -134,7 +149,7 @@ class Memory(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    memory_type: Mapped[MemoryType] = mapped_column(SAEnum(MemoryType, name="memory_type"), nullable=False)
+    memory_type: Mapped[MemoryType] = mapped_column(_pg_enum(MemoryType, "memory_type"), nullable=False)
     claim: Mapped[str] = mapped_column(Text, nullable=False)
     claim_tsv: Mapped[str] = mapped_column(
         TSVECTOR, Computed("to_tsvector('english', claim)", persisted=True), nullable=False
@@ -144,8 +159,11 @@ class Memory(Base):
     # be re-inserted as active because the index still holds it.
     claim_hash: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1024), nullable=True)
+    # Incremented when a later dictation restates this claim (consolidation's
+    # "duplicate" outcome) — retrieval's fusion boosts by log(occurrence_count).
+    occurrence_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     status: Mapped[MemoryStatus] = mapped_column(
-        SAEnum(MemoryStatus, name="memory_status"),
+        _pg_enum(MemoryStatus, "memory_status"),
         nullable=False,
         server_default=MemoryStatus.ACTIVE.value,
     )
@@ -199,7 +217,7 @@ class QueryTrace(Base):
     candidates: Mapped[list] = mapped_column(JSONB, nullable=False)
     selected_memory_ids: Mapped[list[int] | None] = mapped_column(ARRAY(BigInteger), nullable=True)
     sufficiency_verdict: Mapped[SufficiencyVerdict] = mapped_column(
-        SAEnum(SufficiencyVerdict, name="sufficiency_verdict"), nullable=False
+        _pg_enum(SufficiencyVerdict, "sufficiency_verdict"), nullable=False
     )
     sufficiency_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     answer: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -230,7 +248,7 @@ class UserAction(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     memory_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("memory.id"), nullable=False)
     action: Mapped[UserActionType] = mapped_column(
-        SAEnum(UserActionType, name="user_action_type"), nullable=False
+        _pg_enum(UserActionType, "user_action_type"), nullable=False
     )
     resulting_memory_id: Mapped[int | None] = mapped_column(
         BigInteger, ForeignKey("memory.id"), nullable=True
