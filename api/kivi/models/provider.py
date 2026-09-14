@@ -172,11 +172,12 @@ class SarvamProvider(ModelProvider):
         self, messages: list[dict], *, model: str, tier: Tier, json_mode: bool
     ) -> tuple[str, int, int]:
         payload: dict = {"model": model, "messages": messages, "max_tokens": _MAX_TOKENS}
-        if tier == "extraction":
+        if json_mode:
             # CRITICAL: without this, thinking-mode reasoning tokens consume
             # max_tokens and content comes back empty with finish_reason "length".
+            # Triggered by needing reliable JSON, not by tier — answer-tier
+            # schema calls hit this exactly the same way extraction-tier ones do.
             payload["reasoning_effort"] = None
-        if json_mode:
             payload["response_format"] = {"type": "json_object"}
 
         response = await self._client.post(

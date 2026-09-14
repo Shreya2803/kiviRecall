@@ -162,6 +162,9 @@ class Memory(Base):
     # Incremented when a later dictation restates this claim (consolidation's
     # "duplicate" outcome) — retrieval's fusion boosts by log(occurrence_count).
     occurrence_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+    # Nothing sets this yet — see 0006's migration note. Fusion still checks it
+    # so the "force pinned to top" step exists and is testable.
+    pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     status: Mapped[MemoryStatus] = mapped_column(
         _pg_enum(MemoryStatus, "memory_status"),
         nullable=False,
@@ -213,9 +216,15 @@ class QueryTrace(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     question: Mapped[str] = mapped_column(Text, nullable=False)
+    # The route actually taken: "find" | "recall" | "act" | "chitchat", or an
+    # "out_of_bounds:<category>" decline that skipped retrieval entirely.
+    route: Mapped[str | None] = mapped_column(Text, nullable=True)
     filters: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     candidates: Mapped[list] = mapped_column(JSONB, nullable=False)
     selected_memory_ids: Mapped[list[int] | None] = mapped_column(ARRAY(BigInteger), nullable=True)
+    # ids the answer actually cited — a subset of selected_memory_ids, since the
+    # model may not lean on every candidate it was handed.
+    cited_memory_ids: Mapped[list[int] | None] = mapped_column(ARRAY(BigInteger), nullable=True)
     sufficiency_verdict: Mapped[SufficiencyVerdict] = mapped_column(
         _pg_enum(SufficiencyVerdict, "sufficiency_verdict"), nullable=False
     )
@@ -226,6 +235,11 @@ class QueryTrace(Base):
     input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     estimated_cost_usd: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
+    # Two figures per CLAUDE.md: time spent finding candidates vs. time spent
+    # generating the answer — a slow turn should be attributable to one or the
+    # other, not just one opaque total.
+    retrieval_latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    generation_latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

@@ -54,6 +54,20 @@ async def _lookup_exact(session: AsyncSession, normalized: str) -> EntityAlias |
     return await session.scalar(select(EntityAlias).where(EntityAlias.normalized == normalized))
 
 
+async def _graduate(session: AsyncSession, entity_id: int) -> None:
+    """A new entity starts low-confidence and flagged (CLAUDE.md §7: bias toward
+    under-merging — we weren't sure it was real). An exact/transliteration match
+    is unambiguous by construction, so once one fires against an entity a second
+    time, the original doubt is resolved and it should stop being penalised
+    forever. Without this, retrieval's confidence boost would permanently
+    discount every entity-anchored memory relative to entity-less ones — the
+    opposite of what the entity join is supposed to do."""
+    entity = await session.get(Entity, entity_id)
+    if entity is not None and (entity.confidence < 1.0 or entity.needs_review):
+        entity.confidence = 1.0
+        entity.needs_review = False
+
+
 async def _disambiguate(
     provider: ModelProvider, surface_form: str, context: str, candidates: list[Entity]
 ) -> tuple[int | None, Completion]:
@@ -90,6 +104,7 @@ async def resolve_entity(
     if raw_key:
         existing = await _lookup_exact(session, raw_key)
         if existing:
+            await _graduate(session, existing.entity_id)
             return ResolvedEntity(existing.entity_id, False, AliasMatchMethod.EXACT, 1.0), completions
 
     # Pass 2: transliteration-normalised match.
@@ -97,6 +112,7 @@ async def resolve_entity(
     if translit_key and translit_key != raw_key:
         existing = await _lookup_exact(session, translit_key)
         if existing:
+            await _graduate(session, existing.entity_id)
             return (
                 ResolvedEntity(existing.entity_id, False, AliasMatchMethod.TRANSLITERATION, 1.0),
                 completions,

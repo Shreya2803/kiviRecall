@@ -1,0 +1,108 @@
+from dataclasses import dataclass
+from pathlib import Path
+
+from pydantic import BaseModel
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from kivi.db.enums import SufficiencyVerdict
+from kivi.models.provider import Completion, ModelProvider
+from kivi.retrieval.fusion import FusedCandidate
+
+PROMPT_VERSION = "answer_v2"
+_PROMPT = (Path(__file__).parent.parent / "memory" / "prompts" / f"{PROMPT_VERSION}.md").read_text(
+    encoding="utf-8"
+)
+
+_FALLBACK_TOPIC_LIMIT = 5
+
+
+class _LLMAnswer(BaseModel):
+    text: str
+    cited_memory_ids: list[int]
+
+
+@dataclass
+class AnswerResult:
+    text: str
+    cited_memory_ids: list[int]
+
+
+async def _supersession_context(session: AsyncSession, memory_ids: list[int]) -> dict[int, str]:
+    """memory_history (migration 0003) already joins a memory to what it
+    superseded — reused here instead of re-deriving the chain by hand."""
+    if not memory_ids:
+        return {}
+    rows = (
+        await session.execute(
+            text("SELECT superseded_by_id, old_claim FROM memory_history WHERE superseded_by_id = ANY(:ids)"),
+            {"ids": memory_ids},
+        )
+    ).all()
+    return {mid: old_claim for mid, old_claim in rows}
+
+
+async def _fallback_topics(session: AsyncSession) -> list[str]:
+    """What to name instead of a bare 'I don't know' when there is truly
+    nothing relevant: the entities Kivi has the most active knowledge about."""
+    rows = (
+        await session.execute(
+            text(
+                """
+                SELECT e.canonical_name, COUNT(*) AS c
+                FROM entity e
+                JOIN memory_entity me ON me.entity_id = e.id
+                JOIN memory m ON m.id = me.memory_id AND m.status = 'active'
+                GROUP BY e.id, e.canonical_name
+                ORDER BY c DESC
+                LIMIT :limit
+                """
+            ),
+            {"limit": _FALLBACK_TOPIC_LIMIT},
+        )
+    ).all()
+    return [name for name, _ in rows]
+
+
+async def run_answer(
+    session: AsyncSession,
+    provider: ModelProvider,
+    question: str,
+    verdict: SufficiencyVerdict,
+    verdict_reason: str,
+    selected: list[FusedCandidate],
+) -> tuple[AnswerResult, Completion]:
+    memory_ids = [fc.memory_id for fc in selected]
+    history = await _supersession_context(session, memory_ids)
+
+    lines = ["Sufficiency verdict: " + verdict.value + f" ({verdict_reason})", ""]
+    if selected:
+        lines.append("Retrieved memories (each dated by when it was recorded):")
+        for fc in selected:
+            line = f"- id={fc.memory_id} (recorded {fc.memory.valid_from.date()}): {fc.memory.claim}"
+            if fc.memory_id in history:
+                line += f"  [changed from: {history[fc.memory_id]}]"
+            lines.append(line)
+    else:
+        lines.append("Retrieved memories: none.")
+
+    if verdict == SufficiencyVerdict.INSUFFICIENT:
+        topics = await _fallback_topics(session)
+        lines.append("")
+        lines.append(
+            "Kivi does track (name one of these instead of just declining): "
+            + (", ".join(topics) if topics else "nothing yet — the memory store is empty")
+        )
+
+    messages = [
+        {"role": "system", "content": _PROMPT},
+        {"role": "user", "content": f"Question: {question}\n\n" + "\n".join(lines)},
+    ]
+    completion = await provider.complete(messages, schema=_LLMAnswer, tier="answer")
+    llm_answer = _LLMAnswer.model_validate_json(completion.content)
+
+    # Never trust the model's self-reported citations blindly: a cited id that
+    # wasn't actually offered to it is not real provenance.
+    valid_ids = set(memory_ids)
+    cited = [mid for mid in llm_answer.cited_memory_ids if mid in valid_ids]
+    return AnswerResult(text=llm_answer.text, cited_memory_ids=cited), completion

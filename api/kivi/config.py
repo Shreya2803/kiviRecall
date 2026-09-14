@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-m3"
     use_local_embeddings: bool = True
 
+    # Retrieval (Phase 5). Thresholds live here, not hardcoded in sufficiency.py,
+    # so a reviewer can see and tune the abstention boundary in one place.
+    rrf_k: int = 60
+    candidate_limit_per_generator: int = 30
+    fused_top_n: int = 10
+    sufficiency_min_fused_score: float = 0.02
+    sufficiency_min_memory_confidence: float = 0.5
+
 
 # Instantiated at import time so a missing required variable (DATABASE_URL,
 # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB) raises pydantic's
