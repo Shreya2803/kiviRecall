@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,8 +16,13 @@ class Settings(BaseSettings):
     extraction_model: str = "sarvam-105b"
     answer_model: str = "sarvam-105b"
 
-    openai_api_key: str | None = None
-    openai_base_url: str = "https://api.openai.com/v1"
+    # OpenAI-compatible fallback, used when SARVAM_API_KEY is absent so a reviewer
+    # without a Sarvam key can still run everything. Currently Gemini's OpenAI
+    # compatibility layer.
+    gemini_api_key: str | None = None
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
+    gemini_extraction_model: str = "gemini-3.5-flash-lite"
+    gemini_answer_model: str = "gemini-3.5-flash"
 
     embedding_model: str = "BAAI/bge-m3"
     use_local_embeddings: bool = True
@@ -26,3 +32,30 @@ class Settings(BaseSettings):
 # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB) raises pydantic's
 # ValidationError immediately on startup instead of failing later on first use.
 settings = Settings()  # type: ignore[call-arg]
+
+
+class ModelPricing(BaseModel):
+    input_per_million: float  # USD per 1,000,000 input tokens
+    output_per_million: float  # USD per 1,000,000 output tokens
+
+
+# Sarvam publishes pricing in INR (docs.sarvam.ai/api-reference-docs/pricing).
+# This is a fixed approximate conversion, not a live FX rate — revisit if it
+# drifts far from reality; it only needs to be roughly right for a cost report,
+# not exact to the cent.
+USD_PER_INR = 1 / 83
+
+MODEL_PRICING: dict[str, ModelPricing] = {
+    # ₹29.28 / ₹73.2 per 1M tokens (in/out), fetched from Sarvam's pricing page.
+    "sarvam-105b": ModelPricing(
+        input_per_million=29.28 * USD_PER_INR,
+        output_per_million=73.2 * USD_PER_INR,
+    ),
+    "sarvam-105b-conversations": ModelPricing(
+        input_per_million=29.28 * USD_PER_INR,
+        output_per_million=73.2 * USD_PER_INR,
+    ),
+    # Gemini pricing from ai.google.dev/gemini-api/docs/pricing, USD already.
+    "gemini-3.5-flash-lite": ModelPricing(input_per_million=0.30, output_per_million=2.50),
+    "gemini-3.5-flash": ModelPricing(input_per_million=1.50, output_per_million=9.00),
+}
