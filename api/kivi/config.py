@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     extraction_model: str = "sarvam-105b"
     answer_model: str = "sarvam-105b"
 
-    # OpenAI-compatible fallback, used when SARVAM_API_KEY is absent so a reviewer
+    # Gemini-compatible fallback, used when SARVAM_API_KEY is absent so a reviewer
     # without a Sarvam key can still run everything. Currently Gemini's OpenAI
     # compatibility layer.
     gemini_api_key: str | None = None

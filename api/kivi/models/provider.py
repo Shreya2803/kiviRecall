@@ -194,7 +194,7 @@ class SarvamProvider(ModelProvider):
 
 
 class GeminiProvider(ModelProvider):
-    """OpenAI-compatible fallback, used when SARVAM_API_KEY is absent."""
+    """gemini-compatible fallback, used when SARVAM_API_KEY is absent."""
 
     name = "gemini"
 
