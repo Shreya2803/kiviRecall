@@ -8,3 +8,6 @@ dist/
 .DS_Store
 web/node_modules/
 web/dist/
+claude-code-build-prompts.md
+CLAUDE.md
+SETUP.md
