@@ -23,6 +23,7 @@ services:
       - "8000:8000"
     volumes:
       - ./api:/app
+      - hf_cache:/root/.cache/huggingface
     depends_on:
       db:
         condition: service_healthy
@@ -42,3 +43,4 @@ services:
 volumes:
   pgdata:
   web_node_modules:
+  hf_cache:
