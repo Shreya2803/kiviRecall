@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from kivi.db.models import Dictation
 
-# CLAUDE.md §6: only these four fields are guaranteed by the data contract.
+
 # Everything else must degrade gracefully — a warning, never an error.
 REQUIRED_FIELDS = ("id", "spoken_at", "raw_asr", "formatted_output")
 OPTIONAL_FIELDS = ("app_context", "window_title", "language", "duration_ms", "style_id")
@@ -19,10 +19,7 @@ def compute_content_hash(raw_asr: str, formatted_output: str) -> str:
 
 @dataclass
 class ValidationResult:
-    """The whole batch is validated before anything touches the database. A
-    record missing a required field is dropped with a reason and never reaches
-    ingestion; a record only missing optional fields is kept, with a warning —
-    never a hard failure, per CLAUDE.md's data contract."""
+   
 
     valid: list[dict] = field(default_factory=list)
     warnings_by_id: dict[str, list[str]] = field(default_factory=dict)

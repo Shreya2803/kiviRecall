@@ -21,9 +21,7 @@ class Candidate:
 async def entity_candidates(
     session: AsyncSession, entity_ids: list[int], limit: int
 ) -> list[Candidate]:
-    """Recall-oriented and unscored on purpose: this is the join that recovers
-    distributed facts (CLAUDE.md), so it returns everything linked to a resolved
-    entity rather than ranking by any notion of relevance."""
+   
     if not entity_ids:
         return []
     rows = (

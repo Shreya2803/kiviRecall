@@ -24,7 +24,7 @@ async def find_dictation(
     limit: int = 10,
 ) -> FindResult:
     """A direct lookup of what was actually dictated — never touches memory or
-    an embedding, so it's fast by construction (CLAUDE.md: ~40ms, not 1.5s)."""
+    an embedding, so it's fast by construction ."""
     filters = []
     if app_context:
         filters.append(Dictation.app_context.ilike(f"%{app_context}%"))

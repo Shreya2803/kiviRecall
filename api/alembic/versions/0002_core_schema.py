@@ -51,8 +51,8 @@ def upgrade() -> None:
         postgresql_using="gin",
     )
 
-    # Immutability is a hard rule (CLAUDE.md: "no update or delete paths anywhere
-    # in the codebase"). Enforcing it only in application code means one missed
+    # Immutability is a hard rule 
+    # . Enforcing it only in application code means one missed
     # code path breaks the guarantee silently, so it is enforced again here.
     op.execute(
         """

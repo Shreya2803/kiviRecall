@@ -41,14 +41,6 @@ async def forget_memory(session: AsyncSession, memory_id: int, reason: str | Non
 async def correct_memory(
     session: AsyncSession, memory_id: int, corrected_claim: str, reason: str | None = None
 ) -> int:
-    """Supersede old, create new with origin='user', confidence 1.0, pinned.
-
-    A user-typed correction has no dictation behind it, but CLAUDE.md's
-    provenance invariant (>=1 memory_source row, every memory traces back to
-    an extraction_run) is non-negotiable regardless of origin — so this
-    synthesizes a minimal Dictation + ExtractionRun to anchor it, exactly the
-    shape the write pipeline already produces for an extracted memory.
-    """
     old = await session.get(Memory, memory_id)
     if old is None:
         raise MemoryNotFoundError(f"memory {memory_id} not found")
