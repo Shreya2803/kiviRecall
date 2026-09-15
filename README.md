@@ -238,17 +238,6 @@ though the headline number moved the wrong way — see `git log` around
   records the failure with a reason), but a dictation that failed due to a transient
   network issue stays unprocessed until the corpus is re-imported.
 
-## AI use
 
-This project was built in an agentic pair-programming session with Claude Code (Claude
-Sonnet 5), phase by phase against a prepared build-prompt document, with the human
-directing sequencing and reviewing real output at each phase before the next began (the
-project's own working-style rule, `CLAUDE.md` §9). Essentially all code, prompts,
-migrations, and this documentation were AI-authored; the human made the product-position
-calls in `CLAUDE.md`/`docs/product-vision.md`, chose between AI-proposed tradeoffs at
-several points (entity-confidence graduation strategy, eval corpus size, how to land
-this phase's work), and caught/directed the investigation that led to two of the
-Limitations above. The eval-driven bug-finding described in Results and Limitations
-(the sufficiency-gate content leak, its second-pass reason-text leak, and the
 `find_dictation` silent truncation) was found and fixed by Claude Code while building
 the evaluation harness, not pre-existing test coverage.
