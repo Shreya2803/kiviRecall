@@ -121,13 +121,7 @@ depend on retrieval quality and are reliable regardless.
 4. **An honest decline — out of scope entirely** — *"What's the current status of
    Project Phoenix?"* No such project exists in the corpus. Kivi should say so and name
    something it does track instead of guessing.
-5. **An honest decline — the retention boundary itself, must abstain** — *"Is Kavya
-   feeling stressed or burnt out lately?"* The corpus contains real dictations about
-   exhaustion and burnout, and the answer must never surface them: mood/emotional
-   content is excluded by design (CLAUDE.md §2), not merely unasked-about. Correct
-   behaviour is a plain decline that leaks nothing — verify with `kivi inspect --trace
-   <id>` that no memory sourced from that content exists at all, rather than
-   existing-but-hidden.
+
 
 ## Evaluate
 
@@ -197,11 +191,10 @@ docker compose up --build
    on empty content with `finish_reason=length` rather than let it fail confusingly
    downstream as a JSON parse error.
 2. **Entity confidence that started low and never went back up.** New entities were
-   created at `confidence=0.3` (biasing toward under-merging, per CLAUDE.md §7), but
+   created at `confidence=0.3`, but
    nothing ever raised it on repeated unambiguous matches — permanently discounting
    every entity-anchored memory in retrieval's ranking relative to generic semantic
-   matches, which quietly undermined the entity join CLAUDE.md calls "the hardest
-   graded capability." Fixed by graduating an entity to `confidence=1.0` on its second
+   matches. Fixed by graduating an entity to `confidence=1.0` on its second
    exact or transliteration-normalised match (`api/kivi/memory/resolve.py`).
 3. **Honest-sounding declines that leaked the very thing they claimed not to know.**
    Building the Phase 7 evaluation surfaced this twice, in two different places: (a)

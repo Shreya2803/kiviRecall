@@ -75,7 +75,6 @@ class Entity(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     entity_type: Mapped[EntityType] = mapped_column(_pg_enum(EntityType, "entity_type"), nullable=False)
     canonical_name: Mapped[str] = mapped_column(Text, nullable=False)
-    # New entities start low and flagged (CLAUDE.md section 7: bias toward under-merging).
     confidence: Mapped[float] = mapped_column(Float, nullable=False, server_default="1.0")
     needs_review: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     created_at: Mapped[datetime.datetime] = mapped_column(
@@ -245,9 +244,6 @@ class QueryTrace(Base):
     input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     estimated_cost_usd: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
-    # Two figures per CLAUDE.md: time spent finding candidates vs. time spent
-    # generating the answer — a slow turn should be attributable to one or the
-    # other, not just one opaque total.
     retrieval_latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     generation_latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
