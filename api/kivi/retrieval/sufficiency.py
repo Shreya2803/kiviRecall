@@ -38,8 +38,7 @@ async def run_sufficiency(
     the same principle policy.py applies on the write path. Only when none of
     them fire does a cheap model call render the qualitative verdict."""
 
-    # Rule 1: a named thing in the question resolved to nothing. Per CLAUDE.md
-    # §7, that's a strong abstention signal, not license to fuzzy-match.
+    
     if unresolved_entity_surface_forms:
         names = ", ".join(unresolved_entity_surface_forms)
         return (

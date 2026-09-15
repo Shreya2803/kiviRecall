@@ -2,7 +2,7 @@ import enum
 
 
 class MemoryType(str, enum.Enum):
-    """The six things CLAUDE.md §2 says Kivi remembers. No TRAIT value — deliberate."""
+    
 
     PROJECT_STATE = "project_state"
     ROLE = "role"
@@ -27,7 +27,7 @@ class EntityType(str, enum.Enum):
 
 
 class AliasMatchMethod(str, enum.Enum):
-    """Which of the four resolution passes in CLAUDE.md §7 produced this alias."""
+    
 
     EXACT = "exact"
     TRANSLITERATION = "transliteration"

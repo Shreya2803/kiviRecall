@@ -1,4 +1,4 @@
-"""Phase 7 evaluation harness (CLAUDE.md section: Evaluation).
+"""Phase 7 evaluation harness 
 
 By default this does the whole pipeline in one command: truncates the database,
 re-imports data/corpus.jsonl from scratch while sampling table sizes every 100
@@ -14,8 +14,7 @@ Use --no-reset to evaluate against whatever is already in the database instead
 (faster, but the growth-sampling section of the report will say so and skip
 the curve). See the bottom of this file for all flags.
 
-A note on "expected memory ids" (CLAUDE.md's evaluation spec asks for them
-directly in questions.jsonl): extraction is an LLM call, so the exact integer
+A note on "expected memory ids" : extraction is an LLM call, so the exact integer
 memory ids a fresh import produces are not stable across runs even against
 this same corpus — a hardcoded id in questions.jsonl would silently stop
 meaning anything the day the corpus is re-extracted. questions.jsonl instead

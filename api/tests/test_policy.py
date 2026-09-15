@@ -26,8 +26,6 @@ def test_keep_categories_are_kept(category: str) -> None:
 
 @pytest.mark.parametrize("category", REJECT_CATEGORIES)
 def test_every_excluded_category_is_rejected(category: str) -> None:
-    """CLAUDE.md §2's hard rules, checked one category at a time — this is the
-    code-level backstop that must catch it even if the extraction prompt fails."""
     verdict = apply_policy(_claim(category))
     assert verdict.keep is False
     assert verdict.rejected_category == category
