@@ -238,6 +238,3 @@ though the headline number moved the wrong way — see `git log` around
   records the failure with a reason), but a dictation that failed due to a transient
   network issue stays unprocessed until the corpus is re-imported.
 
-
-`find_dictation` silent truncation) was found and fixed by Claude Code while building
-the evaluation harness, not pre-existing test coverage.
