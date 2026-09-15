@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from kivi.db.session import engine
+from kivi.routes import router as api_router
 
 app = FastAPI(title="Kivi Semantic Memory API")
 
@@ -12,6 +13,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(api_router)
 
 REQUIRED_EXTENSIONS = ("vector", "pg_trgm", "unaccent")
 

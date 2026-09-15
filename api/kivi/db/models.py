@@ -27,6 +27,7 @@ from kivi.db.enums import (
     AliasMatchMethod,
     EntityType,
     ExtractionOutcome,
+    MemoryOrigin,
     MemoryStatus,
     MemoryType,
     SufficiencyVerdict,
@@ -165,6 +166,15 @@ class Memory(Base):
     # Nothing sets this yet — see 0006's migration note. Fusion still checks it
     # so the "force pinned to top" step exists and is testable.
     pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    origin: Mapped[MemoryOrigin] = mapped_column(
+        _pg_enum(MemoryOrigin, "memory_origin"), nullable=False, server_default=MemoryOrigin.EXTRACTED.value
+    )
+    # Stored once at creation (from the linked entities' confidence average),
+    # not recomputed live — so a user correction can pin it to 1.0 directly.
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, server_default="1.0")
+    last_confirmed_at: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     status: Mapped[MemoryStatus] = mapped_column(
         _pg_enum(MemoryStatus, "memory_status"),
         nullable=False,

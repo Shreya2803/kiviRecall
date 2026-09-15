@@ -1,10 +1,10 @@
 import math
 from dataclasses import dataclass, field
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from kivi.db.models import Entity, Memory, MemoryEntity
+from kivi.db.models import Memory
 from kivi.retrieval.candidates import Candidate
 
 
@@ -17,25 +17,6 @@ class FusedCandidate:
     confidence: float
     component_scores: dict[str, float | None] = field(default_factory=dict)
     selected: bool = False
-
-
-async def _memory_confidence(session: AsyncSession, memory_ids: list[int]) -> dict[int, float]:
-    """A memory inherits the confidence of the entities it is anchored to — a
-    claim about a brand-new, needs_review entity is exactly as uncertain as that
-    entity is. Memories with no entities (e.g. a bare preference) default to 1.0:
-    there is no entity-resolution risk to discount for."""
-    if not memory_ids:
-        return {}
-    rows = (
-        await session.execute(
-            select(MemoryEntity.memory_id, func.avg(Entity.confidence))
-            .join(Entity, Entity.id == MemoryEntity.entity_id)
-            .where(MemoryEntity.memory_id.in_(memory_ids))
-            .group_by(MemoryEntity.memory_id)
-        )
-    ).all()
-    confidences = {mid: float(avg) for mid, avg in rows}
-    return {mid: confidences.get(mid, 1.0) for mid in memory_ids}
 
 
 def _passes_hard_filters(
@@ -91,14 +72,13 @@ async def fuse(
         await session.execute(select(Memory).where(Memory.id.in_(memory_ids)))
     ).scalars().all()
     memory_by_id = {m.id: m for m in memories}
-    confidence_by_id = await _memory_confidence(session, memory_ids)
 
     all_candidates: list[FusedCandidate] = []
     for mid in memory_ids:
         memory = memory_by_id.get(mid)
         if memory is None:
             continue  # superseded/forgotten between candidate generation and here — skip
-        confidence = confidence_by_id.get(mid, 1.0)
+        confidence = memory.confidence
         rrf_score = rrf_scores[mid]
         boosted = rrf_score * confidence * (1.0 + math.log(memory.occurrence_count))
         all_candidates.append(

@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from kivi.db.enums import MemoryStatus
-from kivi.db.models import Memory, MemoryEntity, MemorySource
+from kivi.db.models import Entity, Memory, MemoryEntity, MemorySource
 from kivi.memory.extract import ExtractedClaim
 from kivi.models.provider import Completion, ModelProvider
 
@@ -61,6 +61,17 @@ async def _link_entities(session: AsyncSession, memory_id: int, entity_ids: list
         session.add(MemoryEntity(memory_id=memory_id, entity_id=entity_id))
 
 
+async def _entity_confidence(session: AsyncSession, entity_ids: list[int]) -> float:
+    """A memory inherits the confidence of the entities it names — a claim
+    about a brand-new, needs_review entity is exactly as uncertain as that
+    entity is. No entities (e.g. a bare preference) means no resolution risk
+    to discount for, so it defaults to fully confident."""
+    if not entity_ids:
+        return 1.0
+    avg = await session.scalar(select(func.avg(Entity.confidence)).where(Entity.id.in_(entity_ids)))
+    return float(avg) if avg is not None else 1.0
+
+
 async def _create_new(
     session: AsyncSession,
     claim: ExtractedClaim,
@@ -72,11 +83,13 @@ async def _create_new(
     extraction_run_id: int,
     superseded_id: int | None,
 ) -> int:
+    confidence = await _entity_confidence(session, entity_ids)
     memory = Memory(
         memory_type=claim.category,  # a KEEP_CATEGORIES value, matches MemoryType exactly
         claim=claim.text,
         claim_hash=claim_hash,
         embedding=embedding,
+        confidence=confidence,
         status=MemoryStatus.ACTIVE,
         valid_from=valid_from,
         extraction_run_id=extraction_run_id,
