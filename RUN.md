@@ -100,5 +100,4 @@ import to sample during.)
 
 *This file covers Phases 0 through 7. Prior phases (ingestion, memory extraction,
 retrieval, the four Hey Kivi tools, the React client) are exercised implicitly by
-importing a corpus and using the app at `http://localhost:5173` — see the repository
-layout in `CLAUDE.md` for where each lives.*
+importing a corpus and using the app at `http://localhost:5173`*
