@@ -1,6 +1,6 @@
 {
-  "run_at": "2026-09-15T07:25:01.000413+00:00",
-  "commit_sha": "da16deadbb7b9734ed503af1dce117139f4aab55",
+  "run_at": "2026-09-15T09:50:18.639172+00:00",
+  "commit_sha": "3acbcb458cab2cd4a7858e5c2a367767db897376",
   "extraction_model": "sarvam-105b",
   "answer_model": "sarvam-105b",
   "provider": "sarvam",
