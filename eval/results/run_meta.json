@@ -1,0 +1,19 @@
+{
+  "run_at": "2026-09-15T06:20:32.527413+00:00",
+  "commit_sha": "unknown",
+  "extraction_model": "sarvam-105b",
+  "answer_model": "sarvam-105b",
+  "provider": "sarvam",
+  "prompt_versions": {
+    "gate": "gate_v1",
+    "extract": "extract_v2",
+    "parse": "parse_v1",
+    "sufficiency": "sufficiency_v1",
+    "answer": "answer_v2",
+    "draft": "draft_v2",
+    "judge": "judge_v1"
+  },
+  "eval_now": "2026-03-28T12:00:00+05:30",
+  "n_questions": 1,
+  "reset_performed": false
+}

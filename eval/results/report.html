@@ -1,0 +1,121 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Kivi eval report</title>
+<style>
+:root { color-scheme: light dark; }
+body { font-family: -apple-system, Segoe UI, sans-serif; margin: 0; padding: 24px 16px; background: #fafafa; color: #1a1a1a; }
+@media (prefers-color-scheme: dark) { body { background: #16181d; color: #e8e8e8; } .card { background: #1e2128 !important; border-color: #333 !important; } table { border-color: #333 !important; } td, th { border-color: #333 !important; } }
+.wrap { max-width: 980px; margin: 0 auto; }
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1.1rem; margin-top: 2rem; }
+.card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.stat { font-size: 1.4rem; font-weight: 600; }
+.label { font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.03em; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+td, th { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; }
+.ok { background: #d4edda; color: #155724; }
+.warn { background: #fff3cd; color: #856404; }
+.bad { background: #f8d7da; color: #721c24; }
+svg { max-width: 100%; }
+code { font-size: 0.8rem; }
+</style></head>
+<body><div class="wrap">
+<h1>Kivi Semantic Memory — Evaluation Report</h1>
+<div id="meta" class="card"></div>
+<h2>Headline metrics</h2>
+<div id="headline" class="grid card"></div>
+<h2>By category</h2>
+<div id="categories"></div>
+<h2>Corpus-level checks</h2>
+<div id="corpus" class="card"></div>
+<h2>Database growth during ingestion</h2>
+<div id="growth" class="card"></div>
+<script>
+const DATA = {"summary": {"n_questions": 1, "n_evaluated": 1, "n_errors": 0, "by_category": {"preference_application": {"n": 1, "answer_accuracy": 0.5, "n_correct": 0, "n_partial": 1, "n_incorrect": 0, "retrieval_recall_at_10": null, "retrieval_ndcg_at_10": null, "citation_accuracy": null, "false_abstention_rate": 0.0}}, "correct_abstention_rate": null, "false_abstention_rate": 0.0, "privacy_leaks": [], "dictation_lookup_precision": null, "dictation_lookup_recall": null, "latency_ms_p50": 20677, "latency_ms_p95": 20677, "retrieval_latency_ms_p50": null, "retrieval_latency_ms_p95": null, "total_query_cost_usd": 0.0008216038554216868, "judge_cost_usd": 0.0002827460240963856, "mean_cost_per_query_usd": 0.0008216038554216868, "mean_tokens_per_query": 1855.0}, "corpus_metrics": {"policy_compliance": 0.95, "policy_compliance_note": "fraction of excluded-category dictations that produced zero memories \u2014 must be 1.00", "policy_non_compliant_dictation_ids": ["dict_00322"], "rejection_precision": 0.6097560975609756, "rejection_recall": 0.78125, "memory_precision_vs_answer_key": 0.9490445859872612, "memory_recall_vs_answer_key": 0.6681614349775785, "n_excluded_dictations": 20, "n_ambiguous_dictations": 12, "n_durable_dictations": 223, "n_dictations_with_memories": 157}, "import_stats": null, "run_meta": {"run_at": "2026-09-15T06:20:32.527413+00:00", "commit_sha": "unknown", "extraction_model": "sarvam-105b", "answer_model": "sarvam-105b", "provider": "sarvam", "prompt_versions": {"gate": "gate_v1", "extract": "extract_v2", "parse": "parse_v1", "sufficiency": "sufficiency_v1", "answer": "answer_v2", "draft": "draft_v2", "judge": "judge_v1"}, "eval_now": "2026-03-28T12:00:00+05:30", "n_questions": 1, "reset_performed": false}};
+
+function pct(x) { return x === null || x === undefined ? "—" : (x * 100).toFixed(1) + "%"; }
+function ms(x) { return x === null || x === undefined ? "—" : Math.round(x) + " ms"; }
+function usd(x) { return x === null || x === undefined ? "—" : "$" + x.toFixed(4); }
+function pill(ok) { return ok ? '<span class="pill ok">pass</span>' : '<span class="pill bad">fail</span>'; }
+
+const s = DATA.summary, cm = DATA.corpus_metrics, meta = DATA.run_meta;
+
+document.getElementById("meta").innerHTML = `
+  <div class="grid">
+    <div><div class="label">Commit</div><div>${meta.commit_sha || "unknown"}</div></div>
+    <div><div class="label">Run at</div><div>${meta.run_at}</div></div>
+    <div><div class="label">Extraction model</div><div>${meta.extraction_model}</div></div>
+    <div><div class="label">Answer model</div><div>${meta.answer_model}</div></div>
+    <div><div class="label">Prompt versions</div><div>${Object.entries(meta.prompt_versions).map(([k,v])=>k+"="+v).join(", ")}</div></div>
+  </div>`;
+
+document.getElementById("headline").innerHTML = `
+  <div><div class="stat">${s.n_evaluated}/${s.n_questions}</div><div class="label">Questions evaluated</div></div>
+  <div><div class="stat">${pct(s.correct_abstention_rate)}</div><div class="label">Correct abstention rate</div></div>
+  <div><div class="stat">${pct(s.false_abstention_rate)}</div><div class="label">False abstention rate</div></div>
+  <div><div class="stat">${pct(cm.policy_compliance)} ${pill(cm.policy_compliance === 1)}</div><div class="label">Policy compliance (must be 100%)</div></div>
+  <div><div class="stat">${ms(s.latency_ms_p50)} / ${ms(s.latency_ms_p95)}</div><div class="label">End-to-end latency p50 / p95</div></div>
+  <div><div class="stat">${ms(s.retrieval_latency_ms_p50)} / ${ms(s.retrieval_latency_ms_p95)}</div><div class="label">Retrieval latency p50 / p95</div></div>
+  <div><div class="stat">${usd(s.total_query_cost_usd)}</div><div class="label">Total query cost</div></div>
+  <div><div class="stat">${usd(s.mean_cost_per_query_usd)}</div><div class="label">Mean cost / query</div></div>
+  <div><div class="stat">${s.privacy_leaks.length}</div><div class="label">Privacy leaks detected</div></div>
+`;
+
+let catRows = "";
+for (const [cat, c] of Object.entries(s.by_category)) {
+  catRows += `<tr><td>${cat}</td><td>${c.n}</td><td>${pct(c.answer_accuracy)}</td>`
+    + `<td>${c.n_correct}/${c.n_partial}/${c.n_incorrect}</td>`
+    + `<td>${pct(c.retrieval_recall_at_10)}</td><td>${pct(c.retrieval_ndcg_at_10)}</td>`
+    + `<td>${pct(c.citation_accuracy)}</td><td>${pct(c.false_abstention_rate)}</td></tr>`;
+}
+document.getElementById("categories").innerHTML = `
+  <table><thead><tr><th>Category</th><th>n</th><th>Answer accuracy</th><th>correct/partial/incorrect</th>
+  <th>Recall@10</th><th>nDCG@10</th><th>Citation acc.</th><th>False abstention</th></tr></thead>
+  <tbody>${catRows}</tbody></table>
+  <p style="font-size:0.8rem;opacity:0.7">Recall@10/nDCG@10/citation accuracy only apply to categories with source-dictation ground truth (not dictation_lookup, which has its own precision/recall below: ${pct(s.dictation_lookup_precision)} / ${pct(s.dictation_lookup_recall)}).</p>
+`;
+
+document.getElementById("corpus").innerHTML = `
+  <table>
+    <tr><td>Policy compliance</td><td>${pct(cm.policy_compliance)} ${pill(cm.policy_compliance === 1)} (${cm.n_excluded_dictations} excluded-category dictations checked)</td></tr>
+    <tr><td>Rejection precision</td><td>${pct(cm.rejection_precision)}</td></tr>
+    <tr><td>Rejection recall</td><td>${pct(cm.rejection_recall)}</td></tr>
+    <tr><td>Memory precision vs. answer key</td><td>${pct(cm.memory_precision_vs_answer_key)}</td></tr>
+    <tr><td>Memory recall vs. answer key</td><td>${pct(cm.memory_recall_vs_answer_key)}</td></tr>
+  </table>
+  ${cm.policy_non_compliant_dictation_ids.length ? '<p style="color:#a33">Non-compliant dictation ids: ' + cm.policy_non_compliant_dictation_ids.join(", ") + '</p>' : ''}
+`;
+
+const growth = (DATA.import_stats && DATA.import_stats.growth_samples) || [];
+if (growth.length > 1) {
+  const tables = Object.keys(growth[0].sizes);
+  const w = 880, h = 260, pad = 40;
+  const maxX = Math.max(...growth.map(g => g.processed));
+  const maxY = Math.max(...growth.flatMap(g => Object.values(g.sizes)));
+  const colors = ["#4c78a8","#f58518","#54a24b","#e45756","#72b7b2","#eeca3b","#b279a2","#9c755f","#bab0ac"];
+  const px = p => pad + (p / maxX) * (w - 2*pad);
+  const py = v => h - pad - (v / (maxY || 1)) * (h - 2*pad);
+  let paths = "";
+  tables.forEach((t, i) => {
+    const d = growth.map((g,j) => (j===0?"M":"L") + px(g.processed).toFixed(1) + "," + py(g.sizes[t]).toFixed(1)).join(" ");
+    paths += `<path d="${d}" fill="none" stroke="${colors[i % colors.length]}" stroke-width="2"/>`;
+  });
+  let legend = tables.map((t,i) => `<span style="color:${colors[i%colors.length]}">■</span> ${t}`).join(" &nbsp; ");
+  document.getElementById("growth").innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" width="100%">
+      <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="#888"/>
+      <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h-pad}" stroke="#888"/>
+      ${paths}
+      <text x="${pad}" y="${h-10}" font-size="11">0</text>
+      <text x="${w-pad-40}" y="${h-10}" font-size="11">${maxX} records</text>
+      <text x="4" y="${pad}" font-size="11">${(maxY/1024/1024).toFixed(1)} MB</text>
+    </svg>
+    <div style="font-size:0.8rem">${legend}</div>
+    <p style="font-size:0.8rem;opacity:0.7">Sampled via pg_total_relation_size every 100 records during a fresh import. A sublinear (flattening) curve on the memory table indicates consolidation is deduplicating repeated claims instead of growing linearly with dictation count.</p>
+  `;
+} else {
+  document.getElementById("growth").innerHTML = "<p>No growth samples this run — pass without <code>--no-reset</code> to sample table sizes during a fresh import.</p>";
+}
+</script>
+</div></body></html>

@@ -1,0 +1,48 @@
+{
+  "summary": {
+    "n_questions": 1,
+    "n_evaluated": 1,
+    "n_errors": 0,
+    "by_category": {
+      "preference_application": {
+        "n": 1,
+        "answer_accuracy": 0.5,
+        "n_correct": 0,
+        "n_partial": 1,
+        "n_incorrect": 0,
+        "retrieval_recall_at_10": null,
+        "retrieval_ndcg_at_10": null,
+        "citation_accuracy": null,
+        "false_abstention_rate": 0.0
+      }
+    },
+    "correct_abstention_rate": null,
+    "false_abstention_rate": 0.0,
+    "privacy_leaks": [],
+    "dictation_lookup_precision": null,
+    "dictation_lookup_recall": null,
+    "latency_ms_p50": 20677,
+    "latency_ms_p95": 20677,
+    "retrieval_latency_ms_p50": null,
+    "retrieval_latency_ms_p95": null,
+    "total_query_cost_usd": 0.0008216038554216868,
+    "judge_cost_usd": 0.0002827460240963856,
+    "mean_cost_per_query_usd": 0.0008216038554216868,
+    "mean_tokens_per_query": 1855.0
+  },
+  "corpus_metrics": {
+    "policy_compliance": 0.95,
+    "policy_compliance_note": "fraction of excluded-category dictations that produced zero memories \u2014 must be 1.00",
+    "policy_non_compliant_dictation_ids": [
+      "dict_00322"
+    ],
+    "rejection_precision": 0.6097560975609756,
+    "rejection_recall": 0.78125,
+    "memory_precision_vs_answer_key": 0.9490445859872612,
+    "memory_recall_vs_answer_key": 0.6681614349775785,
+    "n_excluded_dictations": 20,
+    "n_ambiguous_dictations": 12,
+    "n_durable_dictations": 223,
+    "n_dictations_with_memories": 157
+  }
+}

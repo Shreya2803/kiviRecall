@@ -3,12 +3,22 @@ import asyncio
 import time
 from pathlib import Path
 
+from sqlalchemy import text
+
 from kivi.config import settings
 from kivi.db.session import async_session_factory
 from kivi.ingest.jsonl_reader import ingest_records, read_jsonl
 from kivi.memory.pipeline import process_dictation
 from kivi.models.provider import GeminiProvider, ModelProvider, ProviderError, SarvamProvider, get_provider
 from kivi.retrieval.ask import answer_question
+
+# Every application table, in an order TRUNCATE ... CASCADE can safely ignore
+# (CASCADE handles the FK ordering) — deliberately not alembic_version, so a
+# reset never touches schema/migration state, only rows.
+_APP_TABLES = [
+    "dictation", "entity", "entity_alias", "extraction_run", "memory",
+    "memory_source", "memory_entity", "query_trace", "user_action",
+]
 
 
 async def _check_one(label: str, provider: ModelProvider) -> None:
@@ -44,6 +54,16 @@ async def check_models() -> None:
         print(f"Active provider (fallback selection): {active.name}")
     except ProviderError as exc:
         print(f"No provider available: {exc}")
+
+
+async def reset_database() -> None:
+    """Wipes every application row while leaving the schema (and Alembic's
+    version table) untouched — used to get a clean, reproducible base for a
+    full evaluation run without dropping/recreating the database itself."""
+    async with async_session_factory() as session:
+        await session.execute(text(f"TRUNCATE {', '.join(_APP_TABLES)} RESTART IDENTITY CASCADE"))
+        await session.commit()
+    print(f"Truncated {len(_APP_TABLES)} table(s): {', '.join(_APP_TABLES)}")
 
 
 async def import_corpus(path: Path, limit: int | None, do_extract: bool) -> None:
@@ -150,6 +170,7 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("check-models", help="Call each configured provider once and report cost")
+    subparsers.add_parser("reset", help="Truncate all application tables (schema untouched)")
 
     import_parser = subparsers.add_parser("import", help="Ingest a corpus.jsonl and run extraction over it")
     import_parser.add_argument("path", type=Path, help="Path to corpus.jsonl")
@@ -165,6 +186,8 @@ def main() -> None:
 
     if args.command == "check-models":
         asyncio.run(check_models())
+    elif args.command == "reset":
+        asyncio.run(reset_database())
     elif args.command == "import":
         asyncio.run(import_corpus(args.path, args.limit, not args.no_extract))
     elif args.command == "ask":
