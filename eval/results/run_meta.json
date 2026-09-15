@@ -1,6 +1,6 @@
 {
-  "run_at": "2026-09-15T06:20:32.527413+00:00",
-  "commit_sha": "unknown",
+  "run_at": "2026-09-15T07:25:01.000413+00:00",
+  "commit_sha": "da16deadbb7b9734ed503af1dce117139f4aab55",
   "extraction_model": "sarvam-105b",
   "answer_model": "sarvam-105b",
   "provider": "sarvam",
@@ -14,6 +14,6 @@
     "judge": "judge_v1"
   },
   "eval_now": "2026-03-28T12:00:00+05:30",
-  "n_questions": 1,
+  "n_questions": 80,
   "reset_performed": false
 }
