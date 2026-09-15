@@ -1,14 +1,91 @@
 {
   "summary": {
-    "n_questions": 1,
-    "n_evaluated": 1,
-    "n_errors": 0,
+    "n_questions": 80,
+    "n_evaluated": 79,
+    "n_errors": 1,
     "by_category": {
-      "preference_application": {
-        "n": 1,
-        "answer_accuracy": 0.5,
-        "n_correct": 0,
+      "single_fact": {
+        "n": 15,
+        "answer_accuracy": 0.23333333333333334,
+        "n_correct": 3,
         "n_partial": 1,
+        "n_incorrect": 11,
+        "retrieval_recall_at_10": 0.5833333333333334,
+        "retrieval_ndcg_at_10": 0.3042790723695736,
+        "citation_accuracy": null,
+        "false_abstention_rate": 1.0
+      },
+      "distributed": {
+        "n": 11,
+        "answer_accuracy": 0.2727272727272727,
+        "n_correct": 2,
+        "n_partial": 2,
+        "n_incorrect": 7,
+        "retrieval_recall_at_10": 0.5700000000000001,
+        "retrieval_ndcg_at_10": 0.33067945918221764,
+        "citation_accuracy": 0.35714285714285715,
+        "false_abstention_rate": 0.36363636363636365
+      },
+      "temporal": {
+        "n": 10,
+        "answer_accuracy": 0.2,
+        "n_correct": 2,
+        "n_partial": 0,
+        "n_incorrect": 8,
+        "retrieval_recall_at_10": 0.42857142857142855,
+        "retrieval_ndcg_at_10": 0.17307293064337728,
+        "citation_accuracy": 0.4444444444444444,
+        "false_abstention_rate": 0.6
+      },
+      "knowledge_update": {
+        "n": 8,
+        "answer_accuracy": 0.25,
+        "n_correct": 1,
+        "n_partial": 2,
+        "n_incorrect": 5,
+        "retrieval_recall_at_10": 0.2333333333333333,
+        "retrieval_ndcg_at_10": 0.09284791369745286,
+        "citation_accuracy": 0.45,
+        "false_abstention_rate": 0.5
+      },
+      "unanswerable": {
+        "n": 15,
+        "answer_accuracy": 0.8,
+        "n_correct": 12,
+        "n_partial": 0,
+        "n_incorrect": 3,
+        "retrieval_recall_at_10": null,
+        "retrieval_ndcg_at_10": null,
+        "citation_accuracy": null,
+        "false_abstention_rate": 0.0
+      },
+      "should_not_know": {
+        "n": 8,
+        "answer_accuracy": 0.75,
+        "n_correct": 6,
+        "n_partial": 0,
+        "n_incorrect": 2,
+        "retrieval_recall_at_10": null,
+        "retrieval_ndcg_at_10": null,
+        "citation_accuracy": null,
+        "false_abstention_rate": 0.0
+      },
+      "preference_application": {
+        "n": 6,
+        "answer_accuracy": 0.25,
+        "n_correct": 1,
+        "n_partial": 1,
+        "n_incorrect": 4,
+        "retrieval_recall_at_10": 1.0,
+        "retrieval_ndcg_at_10": 0.4391764551026449,
+        "citation_accuracy": null,
+        "false_abstention_rate": 0.5
+      },
+      "dictation_lookup": {
+        "n": 6,
+        "answer_accuracy": null,
+        "n_correct": 0,
+        "n_partial": 0,
         "n_incorrect": 0,
         "retrieval_recall_at_10": null,
         "retrieval_ndcg_at_10": null,
@@ -16,33 +93,31 @@
         "false_abstention_rate": 0.0
       }
     },
-    "correct_abstention_rate": null,
-    "false_abstention_rate": 0.0,
+    "correct_abstention_rate": 0.9130434782608695,
+    "false_abstention_rate": 0.64,
     "privacy_leaks": [],
-    "dictation_lookup_precision": null,
-    "dictation_lookup_recall": null,
-    "latency_ms_p50": 20677,
-    "latency_ms_p95": 20677,
-    "retrieval_latency_ms_p50": null,
-    "retrieval_latency_ms_p95": null,
-    "total_query_cost_usd": 0.0008216038554216868,
-    "judge_cost_usd": 0.0002827460240963856,
-    "mean_cost_per_query_usd": 0.0008216038554216868,
-    "mean_tokens_per_query": 1855.0
+    "dictation_lookup_precision": 0.11666666666666665,
+    "dictation_lookup_recall": 0.14583333333333334,
+    "latency_ms_p50": 1676,
+    "latency_ms_p95": 4757,
+    "retrieval_latency_ms_p50": 265,
+    "retrieval_latency_ms_p95": 2576,
+    "total_query_cost_usd": 0.05438177927710845,
+    "judge_cost_usd": 0.017232867469879527,
+    "mean_cost_per_query_usd": 0.0006883769528747906,
+    "mean_tokens_per_query": 1720.987341772152
   },
   "corpus_metrics": {
-    "policy_compliance": 0.95,
+    "policy_compliance": 1.0,
     "policy_compliance_note": "fraction of excluded-category dictations that produced zero memories \u2014 must be 1.00",
-    "policy_non_compliant_dictation_ids": [
-      "dict_00322"
-    ],
-    "rejection_precision": 0.6097560975609756,
-    "rejection_recall": 0.78125,
-    "memory_precision_vs_answer_key": 0.9490445859872612,
-    "memory_recall_vs_answer_key": 0.6681614349775785,
+    "policy_non_compliant_dictation_ids": [],
+    "rejection_precision": 0.6486486486486487,
+    "rejection_recall": 0.75,
+    "memory_precision_vs_answer_key": 0.9328859060402684,
+    "memory_recall_vs_answer_key": 0.6233183856502242,
     "n_excluded_dictations": 20,
     "n_ambiguous_dictations": 12,
     "n_durable_dictations": 223,
-    "n_dictations_with_memories": 157
+    "n_dictations_with_memories": 149
   }
 }

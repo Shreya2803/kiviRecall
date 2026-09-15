@@ -1,0 +1,97 @@
+{
+  "dictations_processed": 420,
+  "dictations_skipped_duplicate": 80,
+  "abstained_no_memories": 243,
+  "errored": 4,
+  "memories_created": 184,
+  "ingestion_cost_usd": 0.26480373397590345,
+  "ingestion_tokens_in": 553399,
+  "ingestion_tokens_out": 78896,
+  "ingestion_elapsed_s": 2138.156019717004,
+  "growth_samples": [
+    {
+      "processed": 0,
+      "sizes": {
+        "dictation": 417792,
+        "entity": 16384,
+        "entity_alias": 49152,
+        "extraction_run": 24576,
+        "memory": 73728,
+        "memory_source": 16384,
+        "memory_entity": 16384,
+        "query_trace": 16384,
+        "user_action": 24576
+      }
+    },
+    {
+      "processed": 100,
+      "sizes": {
+        "dictation": 483328,
+        "entity": 32768,
+        "entity_alias": 90112,
+        "extraction_run": 90112,
+        "memory": 835584,
+        "memory_source": 32768,
+        "memory_entity": 40960,
+        "query_trace": 16384,
+        "user_action": 24576
+      }
+    },
+    {
+      "processed": 200,
+      "sizes": {
+        "dictation": 483328,
+        "entity": 32768,
+        "entity_alias": 90112,
+        "extraction_run": 114688,
+        "memory": 1556480,
+        "memory_source": 32768,
+        "memory_entity": 40960,
+        "query_trace": 16384,
+        "user_action": 24576
+      }
+    },
+    {
+      "processed": 300,
+      "sizes": {
+        "dictation": 483328,
+        "entity": 32768,
+        "entity_alias": 90112,
+        "extraction_run": 155648,
+        "memory": 2285568,
+        "memory_source": 65536,
+        "memory_entity": 73728,
+        "query_trace": 16384,
+        "user_action": 24576
+      }
+    },
+    {
+      "processed": 400,
+      "sizes": {
+        "dictation": 483328,
+        "entity": 32768,
+        "entity_alias": 114688,
+        "extraction_run": 196608,
+        "memory": 2719744,
+        "memory_source": 65536,
+        "memory_entity": 73728,
+        "query_trace": 16384,
+        "user_action": 24576
+      }
+    },
+    {
+      "processed": 420,
+      "sizes": {
+        "dictation": 483328,
+        "entity": 32768,
+        "entity_alias": 114688,
+        "extraction_run": 196608,
+        "memory": 2826240,
+        "memory_source": 65536,
+        "memory_entity": 73728,
+        "query_trace": 16384,
+        "user_action": 24576
+      }
+    }
+  ]
+}

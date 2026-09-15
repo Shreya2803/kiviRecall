@@ -715,6 +715,13 @@ async def main() -> None:
         )
     else:
         print("=== Skipping reset/import (--no-reset): evaluating current DB state ===")
+        # Keep showing the growth curve from the last real import instead of the
+        # report silently losing it just because this particular run didn't
+        # re-import — the file on disk still reflects the database's real history.
+        existing = args.out_dir / "import_stats.json"
+        if existing.exists():
+            import_stats = json.loads(existing.read_text(encoding="utf-8"))
+            print(f"[import] reusing growth samples from {existing} (not from this run)")
 
     async with async_session_factory() as session:
         corpus_metrics = await corpus_level_metrics(session, answer_key)
