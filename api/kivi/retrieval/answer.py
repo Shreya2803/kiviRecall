@@ -72,27 +72,38 @@ async def run_answer(
     verdict_reason: str,
     selected: list[FusedCandidate],
 ) -> tuple[AnswerResult, Completion]:
-    memory_ids = [fc.memory_id for fc in selected]
-    history = await _supersession_context(session, memory_ids)
-
-    lines = ["Sufficiency verdict: " + verdict.value + f" ({verdict_reason})", ""]
-    if selected:
-        lines.append("Retrieved memories (each dated by when it was recorded):")
-        for fc in selected:
-            line = f"- id={fc.memory_id} (recorded {fc.memory.valid_from.date()}): {fc.memory.claim}"
-            if fc.memory_id in history:
-                line += f"  [changed from: {history[fc.memory_id]}]"
-            lines.append(line)
-    else:
-        lines.append("Retrieved memories: none.")
-
+    # On an insufficient verdict, the model must decline — so it is never shown
+    # the retrieved memories' actual content, only the names of things Kivi
+    # does track. Passing the real claims here and trusting the prompt alone to
+    # withhold them is exactly the kind of boundary the rest of this codebase
+    # never relies on a prompt for (see policy.py): a model told "don't answer"
+    # will still sometimes paraphrase what it was just shown.
     if verdict == SufficiencyVerdict.INSUFFICIENT:
+        memory_ids: list[int] = []
         topics = await _fallback_topics(session)
-        lines.append("")
-        lines.append(
+        lines = [
+            "Sufficiency verdict: insufficient (" + verdict_reason + ")",
+            "",
+            "Retrieved memories: withheld — the verdict is insufficient, so nothing found is reliable "
+            "enough to answer from. Do not guess at or describe what might have been retrieved.",
+            "",
             "Kivi does track (name one of these instead of just declining): "
-            + (", ".join(topics) if topics else "nothing yet — the memory store is empty")
-        )
+            + (", ".join(topics) if topics else "nothing yet — the memory store is empty"),
+        ]
+    else:
+        memory_ids = [fc.memory_id for fc in selected]
+        history = await _supersession_context(session, memory_ids)
+
+        lines = ["Sufficiency verdict: " + verdict.value + f" ({verdict_reason})", ""]
+        if selected:
+            lines.append("Retrieved memories (each dated by when it was recorded):")
+            for fc in selected:
+                line = f"- id={fc.memory_id} (recorded {fc.memory.valid_from.date()}): {fc.memory.claim}"
+                if fc.memory_id in history:
+                    line += f"  [changed from: {history[fc.memory_id]}]"
+                lines.append(line)
+        else:
+            lines.append("Retrieved memories: none.")
 
     messages = [
         {"role": "system", "content": _PROMPT},
