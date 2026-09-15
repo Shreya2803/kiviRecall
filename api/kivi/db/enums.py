@@ -50,3 +50,9 @@ class SufficiencyVerdict(str, enum.Enum):
 class UserActionType(str, enum.Enum):
     FORGET = "forget"
     CORRECT = "correct"
+    CONFIRM = "confirm"
+
+
+class MemoryOrigin(str, enum.Enum):
+    EXTRACTED = "extracted"
+    USER = "user"

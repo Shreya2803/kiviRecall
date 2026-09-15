@@ -18,10 +18,11 @@ async def _seed_memory(
     claim: str = "Tara launches March 20",
     memory_type: MemoryType = MemoryType.PROJECT_STATE,
     occurrence_count: int = 1,
-    entity_confidence: float | None = 1.0,
+    confidence: float = 1.0,
     pinned: bool = False,
     valid_from: datetime.datetime = NOW,
     valid_to: datetime.datetime | None = None,
+    with_entity: bool = True,
 ) -> Memory:
     dictation_id = f"dict_{suffix}"
     session.add(Dictation(
@@ -41,14 +42,15 @@ async def _seed_memory(
         memory_type=memory_type, claim=claim, claim_hash=f"claimhash_{suffix}",
         status=MemoryStatus.ACTIVE, valid_from=valid_from, valid_to=valid_to,
         extraction_run_id=run.id, occurrence_count=occurrence_count, pinned=pinned,
+        confidence=confidence,
     )
     session.add(memory)
     await session.flush()
     session.add(MemorySource(memory_id=memory.id, dictation_id=dictation_id))
 
-    if entity_confidence is not None:
+    if with_entity:
         entity = Entity(
-            entity_type=EntityType.PROJECT, canonical_name=f"Project{suffix}", confidence=entity_confidence,
+            entity_type=EntityType.PROJECT, canonical_name=f"Project{suffix}", confidence=confidence,
         )
         session.add(entity)
         await session.flush()
@@ -80,8 +82,8 @@ async def test_higher_occurrence_count_boosts_above_equal_rrf_score(db_session: 
 
 @pytest.mark.asyncio
 async def test_low_confidence_entity_reduces_boost(db_session: AsyncSession) -> None:
-    confident = await _seed_memory(db_session, "c", entity_confidence=1.0)
-    unsure = await _seed_memory(db_session, "d", entity_confidence=0.3)
+    confident = await _seed_memory(db_session, "c", confidence=1.0)
+    unsure = await _seed_memory(db_session, "d", confidence=0.3)
 
     lexical = [
         Candidate(memory_id=confident.id, source="lexical", score=0.5, rank=0),
